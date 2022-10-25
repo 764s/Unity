@@ -1,0 +1,239 @@
+? 学习事件触发方式
+
+-- 杂项
+
+-- Unity 动画相关定义
+	https://docs.unity3d.com/Manual/AnimationGlossary.html
+
+-- States
+	https://kybernetik.com.au/animancer/docs/manual/playing/states
+	-- 播放 AnimationClip 时, 由 Animancer 创建的 ClipState. 可以控制和追踪进度.
+	-- 播放同一个 AnimationClip 时, 会复用.
+		实际上正在播放的不会复用, 会创建一个新的, 用链式的形式记录这些 State, 还不清楚有没有删除何时删除
+
+-- AnimancerComponent 类型
+	-- AnimancerComponent
+	-- NamedAnimancerComponent
+	-- HybridAnimancerComponent
+	-- SoloAnimation
+
+--AnimancerState
+	-- ClipState
+		最通用的 AnimancerState, 播放 AnimationClip 时产生
+	-- ControllerStates
+	-- MixserStates
+
+-- 获得 AnimancerState 的方式
+	https://kybernetik.com.au/animancer/docs/manual/playing/states
+	-- animancer.Play 返回
+	-- animancer.States.Current
+		返回最近通过 Play 方法返回的 State, 如果是多层动画, 指的是基础层的
+	-- animancer.Layers[index].CurrentState
+		指定层最近通过 Play 方法返回的 State
+	-- animancer.States[Clip]
+		如果 Clip Key 不存在会报错. 不清楚是不是只存Clip, 应该也是指基础层
+	-- animancer.States.TryGet(Clip)
+		同上
+	-- animancer.States.GetOrCreate(Clip)
+		States 会被 Root(Playable).States 记录
+		同时也会被 Layer 的 States 记录
+	-- animancer.States.Create(Key, clip)
+		用指定的 Key 为 Clip 创建一个State, 就算 State 已经有对应的 Key 存在. 但如果这个 Key 已经存在会报错
+		这个方法调用的其实是 Layer[0] 的 CreateState
+		?? 指定的 Key 和 默认的 Key 不同的话是不是下次用 Clip 就找不到这个 State 了
+
+-- Key
+	https://kybernetik.com.au/animancer/docs/manual/playing/states#keys
+	-- 指 Animancer.AnimancerPlayable.States 记录这个 State 时用的 Key
+	-- 默认情况下 Key 就是 Clip 自己. 对 NamedAnimancerComponent Key 是 Clip.name.
+		Key 和 Clip 一定一一对应吗
+	-- 可以通过 AnimancerComponent.GetKey(Clip) 获取 Clip 的Key
+	--  一个动画在不同的层播放时需要不同的Key. (such as if you need to play it on multiple Layers)
+		一个 State 可以不能在同时在不同的层播放, 但可以提前add
+		?? 同一个动画的不同 State 在两个不同的层播放会有同步问题吗
+	
+--Transition
+	https://kybernetik.com.au/animancer/docs/manual/transitions/
+	AnimationClip 和 播放参数的打包
+	?? Transition 的 State 是什么
+	?? 通过 Transition 产生的 State 有多个时 State 是哪一个
+	-- 每种 State 有自己的转换类型
+		-- Basic Transition
+			https://kybernetik.com.au/animancer/docs/manual/transitions/types/#basic-transitions
+			播放单独的 AnimationClip 和 TimeLine 时
+			-- ClipTransition
+				https://kybernetik.com.au/animancer/docs/manual/transitions/
+			-- ClipTransitionSequence
+				https://kybernetik.com.au/animancer/api/Animancer/ClipTransitionSequence/
+		-- Mixer Transition
+			https://kybernetik.com.au/animancer/docs/manual/transitions/types/#mixer-transitions
+			https://kybernetik.com.au/animancer/docs/manual/blending/mixers/
+		-- Controller Transitions
+			https://kybernetik.com.au/animancer/docs/manual/transitions/types/#controller-transitions
+			Animator Controllers 时 https://kybernetik.com.au/animancer/docs/manual/animator-controllers/
+
+		-- Custom Transitions
+			https://kybernetik.com.au/animancer/docs/manual/transitions/types/#custom-transitions
+	-- 参数
+		https://kybernetik.com.au/animancer/docs/manual/transitions/
+		-- Animation
+			要播放的 AnimationClip
+		-- Fade Duration
+			当这个动画播放时, 上个动画退出的时间. 不能为负数, 为0时会立即播放
+			以单位秒序列化
+			https://kybernetik.com.au/animancer/docs/manual/blending/fading/
+		-- Speed
+			动画播放速度, 负数会倒放
+		-- StartTime
+			播放时动画会立即跳到这个时间
+			默认情况下, 正速度时0, 负速度是1
+			? 如果 inactive(weight == 0) 他会从默认值开始播放, 如果是 active 才会从指定的值开始播
+			以 NormalizedTime 序列化
+		-- EndTime
+			https://kybernetik.com.au/animancer/docs/manual/events/end/
+			决定 EndTime 下的 EndCallBack 是否调用
+			并不是指 OnEnd 是否调用
+			OnEnd 就是 EndEvent.CallBack
+			EndEvent 在 NormalizedTime > 1 以后会一直触发
+			OnStartFade 时 State 的 Event会清除, 不管是往0 还是往 1
+
+			normalized
+			不实际影响播放流程( 由 EndEvent事件处理)
+
+-- SerializeReference
+		https://kybernetik.com.au/animancer/docs/manual/transitions/types#serialized-references
+-- Transition Assets
+		包含 Transition 的资源
+		https://kybernetik.com.au/animancer/docs/manual/transitions/assets/
+		-- UnShared
+			一个 Transition 只能储存最近播放的一个 State Events 和 CallBack
+			? UnShared 是一个实现了 ITransition 的包装, 他引用了原始的 Transition, 同时自己带了 State Events 和 CallBack
+
+-- Serialized References
+		https://kybernetik.com.au/animancer/docs/manual/transitions/types/#serialized-references
+
+-- Fade
+		当调用 Play 方法时, 实际上为所有动画播调用了 AnimancerNode.StartFade, 对新动画调用 StartFade(1, 0.25f), 对老动画调用 StartFade(0, 0.25f). 
+		也就是说, 动画状态本身并不处理所谓的融合, 融合是在 Playable 层面实现的.
+		可以单独只对某一个动画状态调用 StartFade
+		AnimancerLayer 也继承自 AnimancerNode, 也可以调用 StartFade 来渐入渐出
+		? 初始 Fade 可能就是当前 Weight
+		? Fade 总是只 Fade 到1(或者0), 不从头开始
+		-- FadeMods
+			Play 方法的 Fade 参数, 默认是 FadeMode.FixedSpeed
+			?? 实际好像是 FixedDuration
+			主要是解释 FadeDuration 是怎么回事
+			-- FixedSpeed
+				https://kybernetik.com.au/animancer/api/Animancer/FadeMode/0306CB96
+				计算 FadeSpeed,  在指定 Fade 的持续时间, 让 AnimancerNode.Weight 从0增加到1
+				? 以固定速度 Fade. 这个速度指从 Weight 0 Fade 到 1时, 使用指定时间的速度. 具体消耗的时间 指定时间 * 实际Weight变化, 实际过渡越少, 实际消耗时间也越少. (0.5-1, 实际Fade 50%时, 消耗的时间也是 50%)
+			-- FixedDuration
+				https://kybernetik.com.au/animancer/api/Animancer/FadeMode/12C48E37
+				计算 FadeSpeed,  在指定 Fade 的持续时间, 让 AnimancerNode.Weight 从0增加到1
+				? 以固定时间 Fade. 会保证从当前 Weight Fade 到1时耗时固定是指定的时间. (速度具体是多少不重要)
+				时间是真实储存值
+			-- NormalizedSpeed
+				https://kybernetik.com.au/animancer/api/Animancer/FadeMode/0306CB96
+				实际时间需要乘以动画时长. FixedSpeed 的 Normalized版本
+			-- NormalizedDuration
+				https://kybernetik.com.au/animancer/api/Animancer/FadeMode/30325534
+				实际时间需要乘以动画时长. FixedDuration 的 Normalized版本
+			-- FromStart
+				https://kybernetik.com.au/animancer/api/Animancer/FadeMode/6A6E0CFE
+				https://kybernetik.com.au/animancer/docs/manual/blending/fading/modes/
+				特殊的 Fade 模式, 让自己 Fade 到自己
+				一般播放一个动画时, 会取这个动画对应State直接重用他
+				但是在使用 FromStart 模式时, 这个 State  正在使用中, 会创建这个 State 的复制版本来当作新状态, 就像这两个动画是完全不同的.
+				如果当前 State 的的 Weight 低于阈值 AnimancerLayer.WeightlessThreshold, 会认为这个 State 没有播放, 直接拿来播放. (weight应该直接是1, 不然会很怪)
+				管理这些复制 State 的方式, 使用 要复制的 State 作为 Key 储存在 AnimancerPlayable.States 中, 相当于使用已有的 States 方式形成了一个链式引用结构
+				代码在 AnimancerLayer.GetOrCreateWeightlessState 里
+			-- NormalizedFromStart
+				https://kybernetik.com.au/animancer/api/Animancer/FadeMode/DD2F04CB
+				实际时间需要乘以动画时长. FromStart 的 Normalized版本
+		-- 自定义 Fade 曲线
+			https://kybernetik.com.au/animancer/docs/manual/blending/fading/custom/
+			曲线库 https://kybernetik.com.au/animancer/docs/manual/blending/fading/custom/animancer-curve-presets.unitypackage
+
+-- Layers
+	分层动画
+	如果一个层的动画 StartFade 到 0, 也没有其他动画在播的话, fade 的对象默认T姿势, 应该是上一层的结果, 否则当层 fade 会用这个融合结果覆盖上一层
+	https://kybernetik.com.au/animancer/docs/manual/blending/layers
+	-- 细节
+		https://kybernetik.com.au/animancer/docs/manual/blending/layers#details
+		-- 新层
+			如果指定的层不存在, 会自动创建这个层和之前不存在的层
+		-- 改变 State 的层
+			如果动画对应的 AnimancerState 已经存在, 但是指定了一个不同的层, State 会从老的层拿掉. 拿掉的过程没有融合
+			这个过程由 AnimancerLayer.AddChild 实现
+			如果想在不同的层播放同一个动画, 应该提前用不同的 Key Register, 或者直接保留 State 的引用
+		-- 层的DebugName
+			可以调用 SetDebugName 设置 Inspector 的显示名字, 编译版本无效
+	-- 混合
+		https://kybernetik.com.au/animancer/docs/manual`/blending/layers#blending
+		影响混合的因素:
+		-- Weight
+			Layer 和 State 可以调用 StartFade 调整权重 ( 但是 Layer 没有 CrossFade 功能 , 也就是自动把其他层的权重变成0 , 因为一般没这个需求 )
+		-- Masks
+			和 Animator 一样, 可以给 Layer 指定 AvatarMask 来决定这一层影响哪些骨骼.
+			调用 AnimancerComponent.Layers.SetMask 来设置 Mask
+			默认情况下 Index 大的层会覆盖小的层, 可以设置 AnimancerComponent.Layers.IsAdditive 来指定叠加模式
+
+-- Mixers
+	https://kybernetik.com.au/animancer/docs/manual/blending/mixers/
+	作用和 Animator 的 BlendTrees 一样
+	https://kybernetik.com.au/animancer/docs/manual/blending/mixers/#blend-trees-vs.mixers
+	支持动态创建, 动态修改, 能访问融合细节
+	支持Time Synchronization, 还能控制哪个状态同步
+	不支持 Foot Phase Synchronization https://kybernetik.com.au/animancer/docs/manual/blending/mixers/#foot-phase-synchronization
+	? 猜测为每个动画创建 State 然后根据 Mixer 模式 来设置自动调整 AnimancerNode.Weight
+	Mixser 自己也是 AnimancerState, 但是他的 Clip 返回 null. 他的 ChildState 要通过 ChildState 访问, 不存在 Playable.States 中
+	-- 类型
+		-- ManualMixerState
+			对应 BlendTree Direct
+			没有参数, 不自动调整 Weight, 需要手动设置. 适用 additive animations ( 不知道啥是 addtiveAnimation), 和 面部表情
+		-- LinearMixerState
+			对应 BlendTree 1D
+			有一个 float 参数, 根据 Threshold 或者 MixerState<T>.CalculateThresholds 计算每个 ChildState 的 Weight. AnimancerUtilities.CaculateThresholdsFromAverageVelocityXZ 是自带的 CalculateThresholds 
+			一般来说 float 完全等于 Thresholds 时, 对应 ChildState 的 Weight 会是 1
+			插值方法 Linear O(n)
+		-- CartesianMixserState
+			对应 BlendTree 2D Cartesian
+			插值方法 Gradient Band O(n^2)
+		-- DirectionalMixserState
+			对应BlendTree 2D Directional
+			插值方法 Polar Gradient Band O(n^2)
+			更适合代表方向的前后左右移动
+			超过180°的插值会产生不可预料的结果, 比如只有前后右, 当设置参数到左时会得到奇怪的结果
+	-- 创建方式
+		Mixer 可嵌套
+		-- MixerTransition
+			https://kybernetik.com.au/animancer/docs/manual/transitions/types#mixer-transitions
+			对应资源为 MixerTransition2DAsset
+		-- 代码创建
+			https://kybernetik.com.au/animancer/docs/manual/blending/mixers#manual-creation
+	-- 平滑参数
+		https://kybernetik.com.au/animancer/docs/manual/blending/mixers#smoothing
+		设置参数会立即改变, 也有平滑的方式
+		-- 自己每帧控制
+		-- 通过 MixerParameterTween
+			MixerParameterTween 关心的是 State, 通过构造函数传入
+			?? 如果 Transition 产生了多个State, MixerParameterTween 应该不会正确控制新的 State, 怎么处理这种情况
+	-- 融合同步
+		https://kybernetik.com.au/animancer/docs/manual/blending/mixers#synchronization
+		-- Time Synchronization
+			当动画融合时, 可能因为长度不同导致看起来有点怪. 比如 Move 动画结束的时候左脚在地上, 但是此时 Run 动画此时右脚在地上, 如果不处理的话融合出来的结果看起来就怪
+			解决方法是让每一个融合状态的 Normalized 时间相同
+			时间同步最好不要对其中的 Idle (指一个混合树 以速度作为参数, 本身包含了 idle 到 move 的全过程), 关掉对应的同步勾选框, 不然 idle 如果很长的话会导致移动动画也被拖慢
+			? 对于 前后左右相差很大的动画, 在00点加了idle补充过渡时 不知道是不是适用, 需要测试
+		-- Foot Synchronization
+			https://kybernetik.com.au/animancer/docs/manual/blending/mixers#foot-phase-synchronization
+			Mixer 不支持
+			按这个文档的说法, Unity 的步调同步只支持人形动画
+
+-- 性能
+	https://kybernetik.com.au/animancer/docs/manual/playing/states#performance
+	-- 往 PlayableGraph 增加 State 会稍微消耗性能, 但绝大多数情况下可以忽略不计
+	-- 大多数情况下播放动画是只传 Clip
+	-- 在初始化时一次性加入大量 States 会稍微提升性能
+	-- AnimancerState.Destroy 销毁 State
+		?? State 对应的 Clip 会发生什么

@@ -1,0 +1,61 @@
+Timeline
+	https://docs.unity.cn/Packages/com.unity.timeline@1.7/manual/index.html
+
+-- ExposedReference<T>
+	https://docs.unity.cn/Packages/com.unity.timeline@1.7/manual/smpl_custom_tween.html?q=CreateTrackMixer#1-custom-clip
+	资源并不能直接引用实际场景物体, 这个用来帮助 PlayableAsset 运行时引用场景物体
+		?  资源只能引用资源
+	需要用一种方式能让 自定义 Playable 脚本引用到运行时的物体
+	ExposedReference<T> 就是一种形式, 他用 UnityEngin.PropertyName 记录了素材引用场景物体的方式
+		?? 具体是怎么做到的, 路径吗
+	使用时通过 Resolver 来实际结束这个引用方式
+		ExposedReference<T>.Resolve(PlayableGraph.GetResolver()) 
+		?? Resolver 是什么
+		?? Resolver 从整个 Graph 中获取, GetResolver 的结果跟调用顺序有关, 还是 UnityEngin.PropertyName 记录的信息就是相对于整个 PlayableGraph 的呢
+	列表无法序列化, 是个bug
+		https://forum.unity.com/threads/exposed-reference-for-data-in-list.497503/#post-3301741
+
+-- 自定义 Clip 流程
+	https://docs.unity.cn/Packages/com.unity.timeline@1.7/manual/smpl_custom_tween.html?q=CreateTrackMixer
+	Timeline 每帧读取和混合数据丢给 Playable 去播放
+	Clip 的资源形式是 PlayableAsset
+	Clip 的运行时形式是 Playable (ScriptPlayable<PlayableBehaviour>)
+	?? TimelieClip 和 PlaybleAsset, Playable 是啥关系
+	-- 自定义 Clip (PlayableAsset)
+		https://docs.unity.cn/Packages/com.unity.timeline@1.7/manual/smpl_custom_tween.html?q=CreateTrackMixer#1-custom-clip
+		-- 创建 TweenBehaviour (PlayableBehaviour)
+			Clip 最终是一个 Playable, 自定一Playable 的方式是用 ScriptPlayable<> 包装 PlayableBehaviour
+		-- 创建 TweenClip (PlayableAsset)
+			用一个 ScriptableObject 来替 TweenBehaviour 保存数据和资源,  还有引用场景物体 (ExposedReference)
+			TweenClip 运行时创建 TweenBehaviour, 并把储存在自己的数据赋值给它
+		-- 自定义 PlayableAsset 长相
+			https://docs.unity.cn/Packages/com.unity.timeline@1.7/manual/smpl_custom_tween.html?q=CreateTrackMixer#4-customize-a-clips-appearance
+			ClipEditor 可以用来自定义 Clip 的长相, 通过 CustomTimelineEditor 标签告诉 ClipEditor 自己是修饰谁的
+			重写 DrawBackGround 可以改变背景
+				public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region)
+				?? 为什么是 TimelineClip
+	-- 自定义 Track (TrackAsset)
+		https://docs.unity.cn/Packages/com.unity.timeline@1.7/manual/smpl_custom_tween.html?q=CreateTrackMixer#2-custom-track
+		简单继承 TrackAsset 就可以自定一个 Track
+		标签 TrackBindingType 告诉 绑定对象是什么类型 
+			绑定对象是 Transform, Animator 之类
+		标签 TackClipType 告诉 自己可以放 PlayableAsset
+			这个标签可以有多个
+		-- 给 Track 定义 Mixer
+			https://docs.unity.cn/Packages/com.unity.timeline@1.7/manual/smpl_custom_tween.html?q=CreateTrackMixer#3-define-a-track-mixer
+			Mixer 用来处理不同 Clip 之间的混合过渡
+			Track 中的代表形式实际上是这个 Mixer
+				一定有一个! 只有一个!
+			所有在 Track 上的 Clip 都会一股脑连接在这个 Mixer 上
+				? 通过播放时间来和混合曲线来决定 这些 Clip 怎么生效
+			如果不指定 默认会有一个空 Playable 来当这个 Mixer
+			Mixer 是一个 Playable, 自定义的 Mixer 脚本自然也继承 PlayableBehaviour
+			在 Mixer 的 ProcessFrame 里依次询问所有 Playable 可以获得最终 weight
+				playable.GetInputCount()
+				playable.GetInput(i)
+				playable.GetInputWeight(i)
+			然后根据最终 weight 设置实际位置
+				trackBinding.position = accumPosition + m_InitialPosition * (1.0f - totalPositionWeight);
+				trackBinding.rotation = accumRotation.Blend(m_InitialRotation, 1.0f - totalRotationWeight);
+	-- 获取自定义 Behaviour
+		var behaviour = ((ScriptPlayable<AnimancerBehaviour>)playable.GetInput(i)).GetBehaviour()

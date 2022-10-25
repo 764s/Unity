@@ -1,0 +1,196 @@
+Graphs 代表了数据的流动, 每个节点可以消耗和产生内容
+一个Graph 可以同时混合 动画 声音 脚本
+https://docs.unity3d.com/Manual/Playables.html
+
+
+
+-- 杂项
+	-- Play & Pause
+		? Pause 只是不会自动随时间走
+		? 播放状态总是在递增 deltaTime
+			暂停之后再播放, 不管中间间隔多久, 总是在之前的时间上继续
+		Pause 状态自己设置时间也可以达到 Play 的效果
+
+-- PlayableGraph
+	PlayableGraph 定义了一堆 Playable outputs, 这些输出 bound to 一个 GameObject 或者 Component
+	PlayableGraph 也定义了一堆 Playable 和他们之间的关系
+	?? Playable Graph 里同时有 Playable 和 Playable outputs
+	?? Playable 和 Playable outputs 是什么关系
+	PlayableGraph 负责管理他的 Playables 和 Playables 的 outputs. 用 PlayableGraph 创建 连接 销毁 Playables
+	Playable.GetInput 指获得 Connect 到这个 Playable 的其他Playable
+	?? PlayableHandle 是啥
+	? 通过外部设置禁用状态能实现 基于 Playable 的 AI 吗
+	可以运行时修改节点
+	-- 创建
+		PlayableGraph.Create
+	-- 播放
+		PlayableGraph.Play
+	-- 停止
+		PlayableGraph.Stop
+	-- 获取指定时间的状态
+		PlayableGraph.Evaluate
+	-- 销毁
+		PlayableGraph.Destroy
+		会自动销毁 由 PlayableGraph 创建的所有 Playable 和 PlayableOutput
+		必须手动调用这个 Destroy 方法, 否则 Unity 会报错提醒
+-- inheritance nomenclature
+	? 区别 c# 的继承方式, 大意在说结构体的继承功能
+	?? 这种方式的继承如何类型转换
+
+-- Playable
+	结构体, 避免内存垃圾回收 https://docs.unity3d.com/Manual/performance-managed-memory.html
+	用来定义自己和其他 Playable 的关系
+	Playable 是所有 Playable 的基类
+	定义了所有能在 Playable 上执行方法
+	可以给 Playable 手动设置 inputCount 和 outputCount
+			? 设置 outputCount 时, 每个输出都是一样的
+		? 子类也可以有自己的方法, 不知道为什么要单独说明这一句
+		PlayableExtensions 提供了很多静态方法. Playable 自己身上没暴露多少方法
+	PlayableGraph.Connect 可以把两个 Playables connect 到一起, 注意 一些Playables 不能有 inputs
+		public bool Connect<U, V>(U source, int sourceOutputPort, V destination, int destinationInputPort) where U : struct, IPlayable where V : struct, IPlayable
+		?? inputs 指什么
+		?? connect 之后的效果是什么
+	?? 一个Playable 可以被 Connect 到两个 Playable吗
+	?? 怎么自定义Mixer
+	Playable 会出现在 Graph 里
+	可以认为 Playable 是原料
+	还在播放的Playable 周围有白边框
+	-- 获取局部时间
+		UnityEngine.Playables.PlayableExtensions.GetTime(playable);
+	-- 核心 Playable 类型
+		-- Animation
+			-- AnimatorControllerPlayable
+			-- AnimationMixerPlayable
+				至少需要两个 input 否则不会播
+			-- AnimationLayerMixerPlayable
+			-- AnimationClipPlayable
+		-- Audio
+			-- AudioMixerPlayable
+			-- AudioClipPlayable
+		-- User
+			-- ScriptPlayable<>
+	-- 创建 Playable 实例
+		通过 Playable.Create 静态方法创建对应的 Playable
+		Create 方法的第一个参数总是 PlayableGraph, 指定这个 Playable 属于哪个 PlayGraph
+		其他参数依据 Playable 的实际类型而定
+			?? 比如呢
+	-- 自定义 Playable
+		1. 创建一个类继承 PlayableBehaviour
+			public class CustomPlayableBehaviour : PlayableBehaviour
+			PlayableBehaviour是一个代理类, 他没有实现 IPlayable, 是为了方便用 C# 继承的方式实现 IPlayable 扩展
+		2. 使用 ScriptPlayable<> 把 PlayableBehaviour 包装成 IPlayable
+			ScriptPlayable<CustomPlayableBehaviour>.Create
+			-- 可以在 ScriptPlayable 上重新获得 PlayableBehaviour
+				ScriptPlayable<CustomPlaybaleBehaviour>.GetBehaviour()
+-- Playable outputs
+	结构体, 避免内存垃圾回收 https://docs.unity3d.com/Manual/performance-managed-memory.html
+	用来定义 PlayableGraph 的输出
+	用来和 GameObject 或者 Component 绑定
+		?? 一个PlayableGrap 只有一个输出吗
+	PlayableOutput 是所有 PlayableOutput 的基类, 定义了所有的基础方法
+		PlayableOutputExtensions 提供了很多静态方法, PlayableOutput 自己身上没暴露多少方法
+	?? Playable Outputs 怎么绑定到 GameObject 或 Component
+	PlayableOutput 会出现在 Graph 里, 作为 Playable 的最终节点
+	可以认为 PlayableOutput 是结果, 但结果同时也可以作为原料
+	traversal 由 PlayableOutputs 驱动 https://docs.unity3d.com/ScriptReference/Playables.FrameData-output.html
+	-- Link PlayableOuput 到 Playable
+		一个正常的 PlayableOutput 应该链接到一个 Playable,  调用 PlayableOutput.SetSourcePlayable 来Link, 如果没有的话他实际啥都不会做
+			?? 即使指定了 PlayableGraph 也什么都不会做吗
+		
+			?? 有什么条件, 和 connect 说的是一回事吗
+		被链接的 Playable 作为 PlayableOutput 对应的 Playable Tree 的 Root
+			?? PlayableOutput 怎么对应一个 Playable Tree
+			
+	-- 核心 Playable Output 类型
+		-- Animation
+			-- AnimationPlayableOutput
+		-- Audio
+			-- AudioPlayableOutput
+		-- User
+			-- ScriptPlayableOutput
+	-- 创建 PlayableOutput 实例
+		通过 PlayableOutput 对应的 Create 方法
+		Create 方法的第一个参数总是 PlayableGraph, 指定这个 PlayableOutput 属于哪个 PlayGraph
+		其他参数依据依 PlayableOutput 类型而定
+-- PlayableAsset
+	资源, 运行时创建 Playable https://docs.unity3d.com/ScriptReference/Playables.PlayableAsset.html
+-- PlayableHandle
+
+-- PlayableBehaviour
+	-- 执行顺序
+		放在轨道上的 ScriptPlayable<PlayableBehaviour> 以这个顺序执行
+		-- OnPlayableCreate
+			自己对应的 Playable 创建时
+			在 PlayableDirector 创建出来的时候就把所有的 PlayableBehaviour 创建好了
+			不用播就创建了
+			勾选 PayableDirector.PlayOnAwake 时, 这个方法在 Awake 中调用
+		-- OnGraphStart
+			当 Graph.Play 调用时
+			播放以后, 所有 PlayableBehaviour 在这个时候都会额外调用一次 OnBehaviourPause
+			勾选 PayableDirector.PlayOnAwake 时, 这个方法在 Start 之后, 第一次 Update 之前调用. 不确定是不是在 Update 中
+		-- Update
+			这个 Update  指 PlayableDirector 同物体的 MonoBehaviour 的 Update
+			不论把脚本执行顺序设置成 -1000000000 还是 1000000000
+		-- OnBehaviourPlay
+			进入自己的播放区域时调用
+		-- OnBehaviourPause
+			离开自己的播放区时调用
+			两种情况发生
+				-- The effective play state during traversal is changed to Playables.PlayState.Paused. This state is indicated by FrameData.effectivePlayState.
+				-- The PlayableGraph is stopped while the playable play state is Playing. This state is indicated by PlayableGraph.IsPlaying returning true.
+				-- 其实还有第三种情况 OnGraphStart
+		-- PrepareFrame
+			每帧调用
+			在这个阶段 Playable 可以增加或移除自己的 Child Playable
+			总是先父 Playable 才子 Playable
+		-- ProcessFrame
+			每帧调用
+			总是先子 Playable 才父 Playable
+		-- LateUpdate
+		-- OnGraphStop
+			如果还有 playable 处于播放状态会先调用他们的 OnBehaviourPause
+			OnGraphStop 在这一帧 LateUpdate 之后调用
+		-- OnPlayableDestroy
+			自己对应的 Playable 销毁时
+	-- 还不清楚在哪个阶段调用
+		-- PrepareData
+	-- Update & LateUpdate
+		默认情况 Update PrepareFrame ProcessFrame LateUpdate, 不论把 Update 脚本执行顺序设置成-1000000000 还是 1000000000
+
+-- 实现最简播放动画的Playable
+	Graph 显示一个 AnimtionOutput 连线一个 AnimationClip
+	?? Playable 总是不显示吗
+	可以通过 AnimationPlayableUtilities.PlayClip(Animator, clip, out graph) 快捷实现这个效果
+	1. 创建 PlayableGraph
+		var graph = PlayableGraph.Create("TestPlayableGraph");
+	2. 创建 AnimationClipPlayable
+		var playable = AnimationClipPlayable.Create(graph, clip);
+	3. 创建 AnimationPlayableOutput
+		var output = AnimationPlayableOutput.Create(graph, "AnimationOutput", animator);
+			?? name 的作用是什么, 并没有反应在对应output 节点上
+	4. 链接 PlayableOutput 和 Playable
+		output.SetSourcePlayable(playable);
+	5. 播放 PlayableGrap
+		graph.Play();
+	6. 销毁
+		graph.Desroy();
+
+-- 创建 BlendTree
+	Graph 显示一个 AnimationOutput, 一个 AnimationMixer, 两个 AnimationClip
+	1. 创建 PlayableGraph
+	2. 创建 AnimationPlayableOutput
+	3. 创建 AnimationMixerPlayable
+		mixerPlayable = AnimationMixerPlayable.Create(graph, 2, true);
+	4. 创建两个 AnimationClipPayable
+	5. 把两个 AnimationClipPlayable Connect 到 AnimationMixerPlayable
+		graph.Connect(clip1Playable, 0, mixerPlayable, 0);
+        		graph.Connect(clip2Playable, 0, mixerPlayable, 1);
+	6. 把 AnimationMixerPlayable Link 到 AniamtionPlayableOutput
+	7. 播放
+	8. 在 Update 更新 Weight
+		mixerPlayable.SetInputWeight(0, weight1);
+        		mixerPlayable.SetInputWeight(1, 1- weight1);
+			weight 可以超过1 会导致动画拉长
+			两个都要设置, 并且要主动让和等于1
+	9. 销毁
+	

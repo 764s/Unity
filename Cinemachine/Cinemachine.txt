@@ -1,0 +1,196 @@
+-- Cinemachine
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.6/manual/index.html
+	操作 Unity Camera 的工具箱, 解决复杂的数学计算, 目标跟踪, 构成(??), 融合, cutting between shots(??)
+	设计目的是减少耗时的手动操作和对应在代码上的修改上的时间
+	支持 FPS, 第三人称, 2D, side-scroller, top down, rts
+
+-- 设置
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.8/manual/CinemachineSetUpVCam.html#setting-up-virtual-camera
+	场景有一个 CinemachineBrain 和多个 Virtual Camera
+		?? 可以有多个 Brain, 但不清楚他们之间怎么处理冲突
+	1. 通过 GameObject/Cinemachine/Virtual Camera 创建虚拟相机
+		如果没有 Brain, 会自动在 真实相机上加一个
+	2. 设置虚拟相机的 Follow
+		虚拟相机总是根据 Follow 目标的位置来决定相机的真实位置
+	3. 设置虚拟相机的 LookAt
+		虚拟相机总是让相机面向 LookAt 目标
+	4. 自定以虚拟相机行为
+		设置相机的 Follow 和 LookAt 规则
+		设置 Follow Offset
+			在场景里直接拖虚拟相机会改变虚拟相机的 LookOffset 参数, 但 Live 状态的相机无法拖动
+		屏幕构成
+			? 应该是指 DeadZone之类
+		Re-Aiming Damping
+			?? 指什么的 re-aiming
+
+-- Extensions
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.6/manual/CinemachineVirtualCameraExtensions.html
+
+-- Virtual Camears
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.9/manual/CinemachineUsing.html#virtual-cameras
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.8/manual/CinemachineVirtualCamera.html
+	虚拟相机附加给一个空 GameObject 就可以生效, 他代表了场景里的一个虚拟的相机
+	当 CinemachineBrain 或者 Timeline 把相机的控制权交给虚拟相机时, 虚拟相机会把自己的状态复制到真实相机
+		也可以通过 Cinemachine Handle Toolbar 来修改一些通用属性
+			?? 这个 Toolbar 是啥, 自带的链接是空的
+	虚拟相机会移动旋转真实相机, 也会修改他的设置
+	正常情况同时只有一个虚拟相机控制真实相机, 但在融合的时候会有两个同时在控制
+	?? 虚拟相机怎么知道自己控制哪个相机
+	通过启用和禁用虚拟相机的 GameObject 来启用或禁用 Virtual Camera
+	-- 状态
+		虚拟相机会处于几个状态之一
+		-- Live
+			这个虚拟相机会控制有 CinemachineBrain 的相机
+			在 Blend 时两个虚拟相机都会处于 Live 状态
+			选中激活的相机会在 Game 窗口显示 DeadZone
+		-- Standby
+			虚拟相机不控制真实状态, 但保持更新自己的状态
+			这个状态的 Priority 总是小于或等于 Live Virtual Camera
+				如果手动改大 Priority 会让对应的虚拟相机变成 Live 状态
+		-- Disabled
+			不控制相机, 也不更新自己的状态, 可以认为不消耗性能
+				但 Blend 状态的相机即使禁用也会持续生效
+			通过禁用虚拟相机的 GameObject 或者 虚拟相机组件 来进入 Disable 状态
+				禁用 GameObject 会让场景的中的虚拟相机图标都消失, 禁用组件会保留图标			
+	-- 属性
+		-- Body
+			作用是移动相机
+				?? 移动不对准看不到角色, 那可以单独使用移动吗
+				?? 移动一定不影响摄像机的角度吗
+		-- Aim
+			作用是旋转相机
+		-- Follow
+			移动目标
+		-- LookAt
+			瞄准目标
+
+-- Cinemachine Brain
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.9/manual/CinemachineUsing.html#cinemachine-brain
+	真实相机的组件, 他监视场景中所有激活的虚拟相机
+		?? 多个真实相机的组件都是监视全场吗, 和具体的真实相机没关系吗
+	Cinemchine Brain 会使用最近启用的相机中优先级最高的相机作为 Live Virtual Camera, 虚拟相机切换会有一个 cut 或者 blend
+		使用规则 Priority - 启用顺序
+			启用顺序 和 Priority 是独立生效的, 但优先级的作用优先生效, 相等才会考虑启用顺序
+		CinemachineBrain 会自动使用最新启用的, 禁用后不会自动使用, 但是开启的时候还是会设置成最新的
+		多个 Brain 不会冲突, 所有的都会使用最新的
+		可以通过调整优先级来控制相机, 手动改大优先级, 会让原本处于 Standby 的虚拟相机变为 Live 虚拟相机
+			多个 Brain 会立即应用改变, 不会产生冲突
+			?? Blend 时修改 Priority 会怎么样
+		Timeline 的会无视优先级系统, 总是最先生效
+		切换虚拟相机时会有个自动的过渡
+			?? 过渡参数怎么控制
+		? 最近启用的概念应该是用了一个启用顺序来表示, 而不是启用时间或者帧
+		?? cut 和 blend 由什么决定
+
+-- CinemachineComponent
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.9/manual/CinemachineUsing.html#moving-and-aiming
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.9/manual/CinemachineVirtualCamera.html
+	Cinemachine 提供了一些内置的算法来控制相机的移动和瞄准, ? 这些算法实现自 CinemachineComponentBase
+	-- Body
+		https://docs.unity3d.com/Packages/com.unity.cinemachine@2.9/manual/CinemachineVirtualCameraBody.html
+		-- Do Nothing
+			https://docs.unity3d.com/Packages/com.unity.cinemachine@2.9/manual/CinemachineBodyDoNothing.html
+			不移动相机
+			想要手动移动时选择这个
+		-- 3rd Person follow
+			https://docs.unity3d.com/Packages/com.unity.cinemachine@2.9/manual/Cinemachine3rdPersonFollow.html
+			适合第三人称的移动方式, 也可以用来做第一人称. 配合 Cinemachine3rdPersonAim 很适合射击类游戏.
+			和目标保持相对固定的位置和距离
+				?? 向对位置固定 和 距离咋一起说了呢
+				?? 不选择 aim 算法也会锁定虚相机角度, 很奇怪
+			不能直接控制相机, 如果想让相机绕角色移动( alt), 需要用一个假的 gameObject 来实现
+			这个移动算法附带了碰撞处理逻辑
+			-- 关键点
+				-- Orgin(A)
+					跟随目标的位置
+					当跟随目标绕着 z 轴旋转时, rig 也会绕着这个点旋转
+						?? 绕着 z 轴旋转指什么, 原文是 When the target pivots horizontally, the rig rotates with it around this point.
+						?? rig 指什么
+				-- Shoulder(B)
+					正常情况下, 这个点向一边偏移, 来制造过肩跟随的效果
+					?? Vertical rotations of the Follow target are transferred here, so the rig rotates horizontally about the origin, and vertically about the shoulder.
+				-- Hand(C)
+					相对 shoulder 垂直偏移的位置
+					?? The arm length affects the follow target's screen position when the camera rotates vertically
+						?? arm length 指什么
+					第一人称这个值设置成0
+				-- Camera(D)
+					相机的角度总是和目标平行, 但是以 Camear Distance 的距离放在 hand 的后面
+						?? 平行值什么, 角度完全一样吗
+			-- 关于 rig 的旋转
+				-- B rotates horizontally around A
+					?? 明明是相对偏移, 为什么要说 rotate
+					? 可能是说 shoulder点 总是绕 orgin点 的 z 轴旋转
+				-- C rotates vertically around B.
+					?? 不知道什么意思, 明明是单个值, 表示上或者下, 为什么要说 rotate
+			-- 属性
+				-- Damping
+					相机追踪目标的反应速度, 越小反应越快, 可以有三个维度的值. 运行时才生效...
+				-- Shoulder Offset
+					shoulder pivot 相对目标的偏移, 目标空间下, 所以不会让角色相对相机旋转
+					选中虚拟相机在场景中会用一个小红球显示
+					全等于0 并不是让相机和目标重合, 有个默认偏移, 不知道能不能设置(不过没必要)
+				-- Vertical Arm Length
+					hand 相对 shoulder 的垂直偏移
+					
+		-- Transposer
+			和目标保持固定关系, 有 Damping
+		-- Framing Transposer
+			和目标保持屏幕空间的固定关系, 有 Damping
+				?? 如何在屏幕空间保持固定关系, 先在屏幕上限制在通过限制反向计算吗
+		-- Orbital Transposer
+			变化跟随, 可以接受玩家输入
+				?? 什么是变化跟随
+		-- Tracked Dolly
+			在预定好的轨道上跟随
+		-- Hard Lock To Target
+			直接使用目标硬跟随
+				?? 不会贴近重合吗
+	-- Aim 自带
+		-- Do Nothing
+			不旋转相机
+		-- Composer
+			保持目标在 Camera Frame 中, 有 Compositional Constraints
+				?? Camera Frame 指什么
+				?? Compositional Constraints 指什么限制
+		-- Group Composer
+			保持多个目标在 Camera Frame 中
+				? 多个目标好像不是指同时看向多个目标, 因为没有填多个目标的地方
+		-- POV
+			根据角色输入旋转相机
+				?? 怎么旋转法
+		-- Same As Follow Target
+			设置相机的角度和 Follow Target 一样
+		-- Hard Look At
+			硬瞄准, 让目标处在 Camera Frame 中央
+	-- Noise
+		https://docs.unity3d.com/Packages/com.unity.cinemachine@2.8/manual/CinemachineUsing.html#using-noise-to-simulate-camera-shake
+		产生 Camera Shake
+		每帧独立给相机增加躁动
+		
+-- Composing a Shot
+	https://docs.unity3d.com/Packages/com.unity.cinemachine@2.8/manual/CinemachineUsing.html#composing-a-shot
+	Frameing Transposer, Composer, Group Composer 会在 Camera Frame 里定义一个区域用来 Compose a shot
+		?? Transposer 是 Body 的, Composer 是 Aim 的, 这两个同时满足一个区域, 不会相互影响吗, 怎么同时操作这两者来共同保持的
+	-- Dead Zone
+		目标不会离开这个区域
+		中间无色区域, 不是周围的红色区域
+		可以在 Game 窗口拖动蓝色线定义这个范围
+	-- Soft Zone
+		当目标进入这个区域时, 相机会反向推向 dead zone, 根据设置有速度之分
+		淡蓝色区域
+		可以在 Game 窗口拖动红色线定义这个范围
+	-- Screen
+		dead zone 的中心位置所在的地方, 指屏幕上. 0.5表示中间
+		这是两个数
+		可以在 dead zone 内用鼠标拖动改变位置
+	-- Damping
+		通过这个模拟相机的厚重感, 小的值会反应比较快且迅速, 值越大越容易进入 soft zone
+-- Blend
+	两个以上虚拟相机切换 Live 状态时会进入 Blend 状态
+		从无虚拟相机控制状态, 到 Live 一个虚拟相机会导致立即切换
+	禁用 Blend Out 不影响 Blend 过程, 禁用 Blend To 会导致寻找新的 Blend To, 此时三个都会进入 Blend 状态, 如果再禁用第三个并且找不到新的 Blend To 整个Blend 过程会停止
+	Cinemachine Brain 的 LiveBlend 会显示当前的 Blend 状态
+		如果有其他相机处于 Solo 状态, Blend 会继续计算, 但不表现
+
+-- cut

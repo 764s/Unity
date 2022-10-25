@@ -1,0 +1,23 @@
+-- IMGUI
+	https://docs.unity3d.com/cn/current/Manual/GUIScriptingGuide.html
+	不建议构建运行时 UI
+	-- 作用
+		-- 游戏内调试
+		-- 脚本组件自定义属性面板
+		-- 创建新的编辑器窗口或者扩展 Unity 本身
+	-- 基础
+		支持 IMGUI 的对象会有个叫 OnGUI 的函数, 脚本激活时会每帧调用
+		-- 支持 IMGUI 的对象
+			??
+		-- 激活状态
+			??
+	-- 使用方式
+		声明 GUI 控件需要三段关键信息: 类型 (位置, 内容)
+		-- 类型
+			通过调用 GUI 类 或者 GUILayout 类中的函数来声明类型
+			?? EditorGUI, EditorGUILayout 也可以, 为什么不写在这里
+		-- 位置
+		-- 内容
+
+-- 控件
+	-- 

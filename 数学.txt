@@ -1,0 +1,12 @@
+?? 怎么理解指数
+?? 怎么理解对数
+
+-- 函数图像
+	https://www.geogebra.org/graphing
+-- 换底公式
+	log(a, b) = log(c, b) / log(c, a)
+		a, c ∈ (0, 1) ∪ (1, +∞)
+			ac 大于0 且 不等于 1
+	-- 计算器中求 a 为底的指数
+		log(10, y) / log(10, a)
+		无脑 log(y) / log(底)
