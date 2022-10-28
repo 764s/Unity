@@ -7,7 +7,7 @@
 [AssetDatabaseRefreshing]  
 当修改了已经导入的源文件(或源文件的依赖)时, Unity 会重新导入这个文件, 并且更新对应的 imported data  
 
-Unity 提供了 [AssetDatabase] API 来 access Assets, 控制和自定义导入处理  
+[AssetDatabase] API 可以 access Assets, 控制和自定义导入处理  
 
 ## Asset Import Dependencies  
 AssetDataBase 记录每个资源的所有依赖  
