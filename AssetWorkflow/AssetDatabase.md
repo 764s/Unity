@@ -34,7 +34,36 @@ Artifacts are the results of the import process
 The Artifact database contains information about the import results of each source asset  
 Each Artifact contains the import dependency information, Artifact meta-information and a list of Artifact files  
 
-## 通过脚本导入  
+## Importing an Asset  
+当把资源拖入 Project 时, Unity 会自动导入. 也可以通过 [AssetDatabase.ImportAsset] 手动导入
+
+## Loading an Asset  
+Unity 在必要的时候自动加载 assets, 比如资源被加入到 scene, 在 Inspector 里编辑等  
+用脚本加载:  
+* [AssetDatabase.LoadAssetAtPath]  
+* [AssetDatabase.LoadMainAssetAtPath]  
+* [AssetDatabase.LoadAllAssetRepresentationsAtPath]  
+* [AssetDatabase.LoadAllAssetsAtPath]  
+
+脚本加载时会触发:  
+* [AssetModificationProcessor.OnWillSaveAssets]  
+* [AssetPostProcessor.OnPostProcessAllAssets]  
+
+### [AssetDatabase.LoadAssetAtPath]  
+返回这个路径下的第一个资源, 忽略 Project view 下不可见的
+
+
+根据传入的类型不同返回不同的结果  
+忽略大小写  
+All asset names and paths in Unity use forward slashes, even on Windows  
+![asset_LoadAtPathScript.png](Icon/asset_LoadAtPathScript.png)  
+![asset_LoadAtPath_AnimationClip](Icon/asset_LoadAtPath_AnimationClip.png)  
+
+### [AssetDatabase.LoadMainAssetAtPath]  
+只会返回最外层的资源  
+![asset_LoadMainAssetAtPath.png](Icon/asset_LoadMainAssetAtPath.png)  
+
+### [AssetDatabase.LoadAllAssetRepresentationsAtPath]  
 
 
 
@@ -42,3 +71,10 @@ Each Artifact contains the import dependency information, Artifact meta-informat
 [AssetDatabaseRefreshing]:AssetDatabaseRefreshing.md  
 [ExternalVersionControlSystemSupport]:https://docs.unity.cn/2021.3/Documentation/Manual/ExternalVersionControlSystemSupport.html  
 [Unity Accelerator]:https://docs.unity.cn/2021.3/Documentation/Manual/UnityAccelerator.html  
+[AssetDatabase.ImportAsset]:https://docs.unity.cn/2021.3/Documentation/ScriptReference/AssetDatabase.ImportAsset.html  
+[AssetDatabase.LoadAssetAtPath]:https://docs.unity.cn/2021.3/Documentation/ScriptReference/AssetDatabase.LoadAssetAtPath.html  
+[AssetDatabase.LoadMainAssetAtPath]:https://docs.unity.cn/2021.3/Documentation/ScriptReference/AssetDatabase.LoadMainAssetAtPath.html  
+[AssetDatabase.LoadAllAssetRepresentationsAtPath]:https://docs.unity.cn/2021.3/Documentation/ScriptReference/AssetDatabase.LoadAllAssetRepresentationsAtPath.html  
+[AssetDatabase.LoadAllAssetsAtPath]:https://docs.unity.cn/2021.3/Documentation/ScriptReference/AssetDatabase.LoadAllAssetsAtPath.html  
+[AssetModificationProcessor.OnWillSaveAssets]:https://docs.unity.cn/2021.3/Documentation/ScriptReference/AssetModificationProcessor.OnWillSaveAssets.html  
+[AssetPostProcessor.OnPostProcessAllAssets]:https://docs.unity.cn/2021.3/Documentation/ScriptReference/AssetPostProcessor.OnPostProcessAllAssets.html  
