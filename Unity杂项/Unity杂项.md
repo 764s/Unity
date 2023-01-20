@@ -21,6 +21,11 @@ public override float GetPropertyHeight(SerializedProperty property, GUIContent 
 }
 ```
 
+### 进播放模式
+https://docs.unity3d.com/Manual/ConfigurableEnterPlayMode.html  
+不会销毁在非播放状态下创建的材质  
+会重建静态类
+
 ### Unity 便捷操作  
 https://blog.unity.com/technology/five-ways-to-speed-up-your-workflows-in-the-editor  
 

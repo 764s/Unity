@@ -11,6 +11,7 @@ _这两者可以混用, 但需要设置 GL matrices 或者 Handles.BeginGUI 和 
 ### Event  
 在 IMGUI 运行的时候, 总有一个 [current Event](https://docs.unity3d.com/ScriptReference/Event-current.html)  
 它可能是用户点击了鼠标 或者 GUI 需要 repaint 等, 可以通过 [Event.current.type](https://docs.unity3d.com/ScriptReference/EventType.html) 知道  
+只在OnGUI内才有值
 
 ### 自定义  
 Unity 提供了 [GUI][0] 和 [EditorGUI][1] 两个库.  

@@ -7,6 +7,28 @@
 可以在一个 OnGUI 方法中同时使用 Fixed 模式和自动模式  
 自动模式适合不知道有多少元素, 或者不需要特别手动设置位置时  
 
+调用路径:  
+GUIUtility.ProcessEvent()  
+UIElementsUtility.ProcessEvent()  
+UIElementsUtility.DoDispatch()  
+Panel.Repaint()  
+Panel.UpdateForRepaint()  
+VisualTreeUpdater.UpdateVisualTreePhase()  
+UIRRepaintUpdater.Update()  
+UIRRepaintUpdater.DrawChain()  
+RenderChain.Render()  
+UIRenderDevice.DrawChain()  
+UIRenderDevice.EvaluateChain()  
+RenderChainCommand.ExecuteNonDrawMesh()  
+IMGUIContainer.DoIMGUIRepaint()  
+IMGUIContainer.HandleIMGUIEvent()  
+IMGUIContainer.DoOnGUI()  
+UIElementsUtility.EndContainerGUI()  
+GUILayoutUtility.LayoutFromContainer() at GUILayoutUtility.cs:line 175  
+GUILayoutUtility.LayoutFreeGroup() at GUILayoutUtility.cs:line 201  
+__GUILayoutUtility.LayoutSingleGroup()__ at GUILayoutUtility.cs:line 211  
+__GUILayoutGroup.CalcWidth()__ at GUILayoutGroup.cs:line 146  
+
 Arranging Controls  
 --
 固定模式: Groups  
@@ -109,3 +131,6 @@ GUILayout.Button("按钮 2");
 GUILayout.EndArea();
 ```
 ![GUILayoutOption](Icons/GUILayoutOption.png)  
+
+
+[盒子模型](https://www.w3.org/TR/css-box-3/)  
