@@ -103,4 +103,5 @@ https://docs.unity3d.com/Packages/com.unity.cinemachine@2.9/manual/Cinemachine3r
     * Damping From Collision  
         当相机不再碰撞时, 怎么回到正常位置  
         0是立即, 越大越慢  
-    
+
+[关于各个参数的演示和解释](https://sleepingdaemon.medium.com/cinemachine-3rd-person-follow-orbital-and-transposer-4403f0dea4af)

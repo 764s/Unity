@@ -39,4 +39,4 @@ https://blog.unity.com/technology/five-ways-to-speed-up-your-workflows-in-the-ed
 [tips-for-working-more-effectively-with-the-asset-database](https://blog.unity.com/technology/tips-for-working-more-effectively-with-the-asset-database)  
 [enter-play-mode-faster-in-unity-2019-3](https://blog.unity.com/technology/enter-play-mode-faster-in-unity-2019-3)  
 [introducing-the-new-input-system](https://blog.unity.com/technology/introducing-the-new-input-system)  
-
+https://unity.com/how-to/organizing-your-project#folder-structure  
