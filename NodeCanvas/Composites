@@ -1,0 +1,47 @@
++ ### `Selector`
+    目的是按顺序选出一个执行成功的然后返回 `Scuccess`  
+    如果执行完了没有成功的, 返回 `Failure`  
+
+    #### `Dynamic`
+    已经执行完成的会每帧保持执行, 如果成功会立即返回 `Scuccess`    
+    _`dynamic` 起作用的情况是自己正在执行时, 退出后再次进入不需要 `dymaic`_     
+
++ ### `Repeat`
+    目标是重复执行子对象, 直到满足条件
+
+    ### `Repeater Mode`  
+    + `Repeat Times`  
+        重复执行 `Repeat Times` 次, 返回最后一次子对象执行的结果  
+    + `Repeat Until`  
+        重复执行直到子对象返回 `Repeat Until Status`  
+    + `Repeat Forever`  
+        不停重复, 总是返回 `Running`  
+
++ ### `Sequencer`  
+    目的是按顺序确保所有子对象执行成功然后返回 `Success` 
+    任何一个子对象失败立即返回 `Failure`   
+
+    #### `Dynamic`  
+    已经执行完成的会每帧保持执行, 如果失败会立即返回失败 `Failure`  
+
+    ### `Random`  
+    随机执行子对象  
+    实际顺序在 `OnReset` 的时候决定  
+
++ ### `Parallel`  
+    同时执行所有子对象, 知道任何一个子对象以想要的结果完成或者全部执行完    
+    结束时返回的结果时触发结束的子对象的结果, (并不是满足结束条件了就返回成功)  
+    
+    #### `Policy`  
+    + First Failure  
+    任何子对象失败时结束, 返回 `Failure`  
+
+    + First Success  
+    任何子对象成功时结束, 返回 `Success`  
+
+    + First Success Or Failure  
+    任何子对象结束时结束, 返回这个子对象的结果  
+
+    ### `Dynamic(Repeat)`
+    已经结束的子对象会每帧继续执行  
+    _感觉叫Dynamic好, Repeat反而迷惑_  

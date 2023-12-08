@@ -40,3 +40,8 @@ https://blog.unity.com/technology/five-ways-to-speed-up-your-workflows-in-the-ed
 [enter-play-mode-faster-in-unity-2019-3](https://blog.unity.com/technology/enter-play-mode-faster-in-unity-2019-3)  
 [introducing-the-new-input-system](https://blog.unity.com/technology/introducing-the-new-input-system)  
 https://unity.com/how-to/organizing-your-project#folder-structure  
+
++ 关于材质  
+  Renderer.materials 和 Renderer.sharedMaterials  
+  Get方法完全一样, 把里面的材质返回出来, 里面是Shared就返回Shared, 是示例就返回实例
+  Set 方法 Renderer.materials 一定会创建实例材质, 但暂时不清楚如果已经是实例化的材质了他还会不会创建(shared有严格定义吗, unity分的出来吗)
