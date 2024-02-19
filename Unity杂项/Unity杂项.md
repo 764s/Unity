@@ -1,3 +1,56 @@
+### HideFlags
++ GameObject  
+  + None
+  进入播放模式时随场景进入播放模式  
+
+  + DontSave  
+  进入播放模式时不会放入播放场景, 并且引用不会丢失.  
+
+### 进入播放模式顺序  
+测试得到  
+#### `EditorWindow`的属性在`OnEnable`时:  
++ 不重置:  
+  + private int  
+  + private string str  
+  + private TestSerialiableClass  
+  + private Transform  
+  + private List&lt;Transform>  
+
++ 重置:  
+  + private struct  
+  + private object  
+  + private TestClass
+  + private PlayableGraph  
+  + private PlayableGraph?  
+  + private Action  
+  + private event Action  
+  + private List&lt;object>  
+  + public List&lt;object>  
+  + EditorApplication.update  
+  + EditorApplication.playModeStateChanged  
+  + AssemblyReloadEvents.beforeAssemblyReload  
+  + AssemblyReloadEvents.afterAssemblyReload  
+
+#### EditorSceneManager.NewPreviewScene产生的Scene: 
+本身不会有任何改变  
+
+#### 事件顺序:  
+直接编代码也会有这些事件, 只是playModeStateChanged相关事件没了  
+  + ExitingEditMode  
+  + beforeAssemblyReload
+  + 已经打开的EditorWindow.OnDisable  
+  + 已经打开的EditorWindow.OnEnable  
+  这个时候应该已经发生了, 只是事件没有调用  
+  + afterAssemblyReload  
+  + EnteredPlayMode  
+
+### 退出播放模式顺序  
+测试得到  
+`EditorWindow`的普通属性List&lt;Transform>总是保留, 不管是不是在进入播放模式之前还是之后创建  
+`PlayableGraph`总是不受影响  
++ ExitingPlayMode  
++ EnteredEditMode  
+
 ### 特殊文件夹
 https://docs.unity.cn/cn/current/Manual/SpecialFolders.html  
 
